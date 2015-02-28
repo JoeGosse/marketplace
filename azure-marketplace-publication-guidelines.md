@@ -169,24 +169,24 @@ These links can also be found in the Publishing Portal under the SKU page.
 
 Note: if you are using the current Azure Management Portal or PowerShell, Windows Server Images published on September 8, 2014 and later are approved. 
 
-3.3.2.	Create your Windows VM
+**Create your Windows VM**
+
 From the Microsoft Azure Portal, you can create your VM based on an approved base image in just a few simple steps. The following is an overview of the process. 
 
 1.	From the base image page, select Create VM to be directed to the new [Microsoft Azure Portal](https://portal.azure.com).
 2.	Log in to the portal with the Microsoft account and password for the Azure subscription you wish to use.
 3.	Follow the prompts to create a VM using the base image you have selected. At the very least, you will need to provide a host name (name of the computer), username (admin user registered), and password for the VM.
 4.	Select the size of the VM to deploy.
-a.	If you plan to develop the VHD on premises, the size does not matter. Consider using one of the smaller VMs. 
-b.	If you plan to develop the image in Azure, consider using one of the recommended VM sizes for the selected image. 
-c.	For pricing information, refer to the Recommended Pricing Tier selector displayed on the portal. It will provide the three recommended sizes provided by the publisher. (In this case, the publisher is Microsoft.)
+- If you plan to develop the VHD on premises, the size does not matter. Consider using one of the smaller VMs. 
+- If you plan to develop the image in Azure, consider using one of the recommended VM sizes for the selected image. 
+- For pricing information, refer to the Recommended Pricing Tier selector displayed on the portal. It will provide the three recommended sizes provided by the publisher. (In this case, the publisher is Microsoft.)
 5.	Set properties. 
-a.	For quick deployment, you can leave the default values for the properties under Optional Configuration and Resource Group. 
-b.	If desired, under Storage Account, you can select the storage account in which the OS VHD will be stored. 
-c.	If desired, under Resource Group, you can select the logical group in which to place the VM. 
-
+- For quick deployment, you can leave the default values for the properties under Optional Configuration and Resource Group. 
+- If desired, under Storage Account, you can select the storage account in which the OS VHD will be stored. 
+- If desired, under Resource Group, you can select the logical group in which to place the VM. 
 6.	Select the Location to which to deploy. 
-a.	If you plan to develop the VHD on premises, the location does not matter as you will be uploading the image to Azure later. 
-b.	If you plan to develop the image in Azure, consider using one of the US-based Microsoft Azure regions from the beginning. This will speed up the VHD copying process that Microsoft performs on your behalf when you submit your image for certification. 
+- If you plan to develop the VHD on premises, the location does not matter as you will be uploading the image to Azure later. 
+- If you plan to develop the image in Azure, consider using one of the US-based Microsoft Azure regions from the beginning. This will speed up the VHD copying process that Microsoft performs on your behalf when you submit your image for certification. 
 7.	Click Create. The VM will begin deploying. Within minutes, you will have a successful deployment and can begin to create the image for your SKU.
 
 **Develop your VHD in the cloud**
@@ -240,9 +240,59 @@ If additional configuration is needed, consider using a scheduled task that runs
 **Generalize the image**
 
 All images in the Azure Store must be re-usable in a generic fashion. In other words, the OS VHD must be generalized. 
-- For Windows, the image should be “sysprepped” and no configurations should be done that do not support the ‘sysprep’ command. 
-- You can run the command “sysprep.exe /generalize /oobe /shutdown” from the directory %windir%\System32\Sysprep. Guidance on how to sysprep the operating system is provided in Step 1 of the following MSDN article - Create and upload a Windows Server VHD to Azure.
+- For Windows, the image should be “sysprepped” and no configurations should be done that do not support the `sysprep` command. 
+- You can run the command `sysprep.exe /generalize /oobe /shutdown` from the directory `%windir%\System32\Sysprep`. Guidance on how to sysprep the operating system is provided in Step 1 of the following MSDN article - Create and upload a Windows Server VHD to Azure.
 
+## 3.4 Deploy a VM from your VHDs
+Once your VHD(s), generalized OS VHD and zero or more data disk VHDs, are uploaded to an Azure storage account, you can register them as a user VM Image with which to test. Note, since your OS VHD is generalized, you cannot directly deploy the VM by providing the VHD URL.
+
+To learn more about VM Images review the following blog posts: [VM Image](http://azure.microsoft.com/blog/2014/04/14/vm-image-blog-post/),[VM Image PowerShell How To](http://azure.microsoft.com/blog/2014/05/01/vm-image-powershell-how-to-blog-post/), and [About VM Images in Azure](http://msdn.microsoft.com/en-us/library/azure/dn790290.aspx). 
+
+**Create a User VM Image**
+
+To create a user VM Image from your SKU to begin deploying multiple VMs, you need to use the Create VM Image Rest API to register VHDs as a VM Image.
+
+You can use the Invoke-WebRequest cmdlet to create a VM Image from PowerShell. The below PowerShell script shows how to create a VM Image with an OS disk and one data disk. Note, the PowerShell session should already be set up and a subscription set.
+```
+# Image Parameters to Specify
+$ImageName=’myVMImage’
+$Label='IMAGE_LABEL'
+$Description='My VM Image to Test’
+$osCaching='ReadWrite'
+$os = 'Windows'
+$state = 'Generalized'
+$osMediaLink = 'http://mystorageaccount.blob.core.windows.net/vhds/myOSvhd.vhd'
+$dataCaching='None'
+$lun='1'
+$dataMediaLink='http://mystorageaccount.blob.core.windows.net/vhds/mydatavhd.vhd'
+
+# Subscription Related Properties
+$SrvMngtEndPoint='https://management.core.windows.net'
+$subscription = Get-AzureSubscription -Current -ExtendedDetails
+$certificate = $subscription.Certificate
+$SubId = $subscription.SubscriptionId
+
+
+$body = 
+"<VMImage xmlns=`"http://schemas.microsoft.com/windowsazure`" xmlns:i=`"http://www.w3.org/2001/XMLSchema-instance`">" +
+    "<Name>" + $ImageName + "</Name>" +    
+    "<Label>" + $Label + "</Label>" +
+    "<Description>" + $Description + "</Description>" +
+    "<OSDiskConfiguration>" +
+      "<HostCaching>" + $osCaching + "</HostCaching>" +
+      "<OSState>" + $state + "</OSState>" +
+      "<OS>" + $os + "</OS>" +
+      "<MediaLink>" + $osMediaLink + "</MediaLink>" +
+    "</OSDiskConfiguration>" +
+    "<DataDiskConfigurations>" + 
+         "<DataDiskConfiguration>" +
+            "<HostCaching>" + $dataCaching + "</HostCaching>" +
+            "<Lun>" + $lun + "</Lun>" +
+            "<MediaLink>" + $dataMediaLink + "</MediaLink>" +
+         "</DataDiskConfiguration>" +
+    "</DataDiskConfigurations>" + 
+"</VMImage>"
+```
 
 Prepare technical artifacts for publication and complete certification tests (Artifact type specific)
 Virtual Machine Image
