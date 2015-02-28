@@ -12,11 +12,11 @@ Publishers must first apply via the Request Information link on http://azure.com
 ## Step 2: Publisher Contact & Seller Registration 
 
 ### 2.1 Create Microsoft Account
-In order to complete the publishing process, you will need to create a Microsoft account. This account will be used to log in to both the Publishing Portal and the Seller Dashboard. You should only have one Microsoft Account for your Azure Store offerings. They should not be specific to individual VMs. 
+In order to complete the publishing process, you will need to create a Microsoft account. This account will be used to log in to both the Publishing Portal and the Seller Dashboard. You should only have one Microsoft Account for your Azure Marketplace offerings. They should not be specific to individual VMs. 
 
 The address that forms the user name should be on your domain and controlled by your IT team (such as azurepublishing@yourcompany.com). Payment, tax information, and reporting will be routed through this account. 
 
-1.	Within your own domain, create a Distribution List (DL) or Security Group with an email address such as AzureStore@yourcompany.com
+1.	Within your own domain, create a Distribution List (DL) or Security Group with an email address such as azurepublishing@yourcompany.com
 2.	Add your Azure VM publishing team to the DL. The DL must be live to receive the confirmation email necessary to create your account. 
 3.	Register for a Microsoft Account using Distribution List Email using the DL email. You can register for a Microsoft Account at https://signup.live.com/signup.aspx
 4.	When registering, use a valid phone number. The system will send a send verification code as a text message or an automated call if identity verification is required.
@@ -29,7 +29,7 @@ The address that forms the user name should be on your domain and controlled by 
 4.	At this point, do not continue working in the Azure Publishing Portal
 
 ### 2.3 Create your Seller Dashboard account
-Creating your Seller Dashboard account is a one-time task. You should check to make sure your company does not already have a Seller Dashboard account before attempting to create one. During the process, we will collect bank account information, tax information, and company address information. These are typically obtainable from finance or business contacts. For complete instructions on how to create a Seller Dashboard account, see “Create Your Account and Add Payout Information in the Microsoft Seller Dashboard” (http://msdn.microsoft.com/en-us/library/jj552460.aspx)
+Creating your Seller Dashboard account is a one-time task. You should check to make sure your company does not already have a Seller Dashboard account before attempting to create one. During the process, we will collect bank account information, tax information, and company address information. These are typically obtainable from finance or business contacts. For complete instructions on how to create a Seller Dashboard account, see [Create Your Account and Add Payout Information in the Microsoft Seller Dashboard] (http://msdn.microsoft.com/en-us/library/jj552460.aspx)
 
 1.	From the Publishing Portal, click the link that says “seller profile.” 
 2.	Complete the “Help us protect your account” wizard, which will verify your identity via phone number or email address. 
@@ -52,7 +52,7 @@ You can monitor the status of your approvals via the Azure Publishing Portal.
 #Step 4: Getting to staging
 In this step, you will provide the content, pricing, and other information necessary to push your offer to staging. 
 
-##4.1 Provide Azure Store content 
+##4.1 Provide Azure Marketplace content 
 English is the default and only supported language; please ensure that all information provided in the fields is in English. All information can be edited at any time until you push to staging.
 
 1.	Enter the offer summary, long summary, and description for your offer. 
@@ -77,7 +77,7 @@ Some of this information will have been completed during the certification step.
 2.	Enter information under Engineering Contact. 
 3.	Enter information under Customer Support. If you only provide email support, enter a dummy phone number, and your provided email will be used instead.
 
-##4.4 Choose Azure Store categories 
+##4.4 Choose Azure Marketplace categories 
 In the categories tab, there will be an array of selections provided. Your offer may fall under these, and you may select up to five (5) categories.
 
 ##4.5 Try out your offer in staging
