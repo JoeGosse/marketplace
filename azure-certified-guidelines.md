@@ -51,7 +51,7 @@ The call to action for customers should be to purchase or deploy your applicatio
 - Azure Gallery
 
 ## Logo Implementation
-Once you have met requirements and your application has been certified, you will receive the Microsoft Azure Certified badge:
+Once you have met requirements and your application has been certified, you will receive the Microsoft Azure Certified badge. The following defines how you should use this logo to highlight that your product is Microsoft Azure Certified.
 
 ### Placement:
 The Microsoft Azure Certified badge will be displayed on the Azure Marketplace page that features your application. The badge may also be placed on your own website on a page that features the application. The badge should not be placed in such a way that indicates that all other applications are certified as such. It should not be placed on a “partners” page to indicate that you are Microsoft Partner.
