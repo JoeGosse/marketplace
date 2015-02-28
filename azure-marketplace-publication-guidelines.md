@@ -51,12 +51,14 @@ Regardless of which operating system you use, add only the minimum number of dat
 ### 3.1 Define Offers and SKUs
 In this section, you will define the Offers and the SKUs underneath them. An offer is a “parent” to all of its SKUs. You can have multiple offers. How you decide to structure your offers is up to you. When an offer is pushed to staging, it is pushed along with all of its SKUs. Carefully consider your SKU identifiers, as these will be visible in the URL.
 
-**Add an offer **
+**Add an offer**
+
 1.	Log in to the Publishing Portal (publish.windowsazure.com) using your seller account.
 2.	Enter the Virtual Machines tab of the Publishing Portal.In the prompted entry field, enter your offer name, and create.Under seller account, enter your namespace. 
 3.	Add any other administrators you want to be able to work with the publishing portal.
 
 **Define SKU**
+
 Once you have added an offer, you will need to define/identify your SKU(s).
 1.	Add a SKU. It will require an identifier, which will be used in the URL. This will need to be unique within your Publishing Profile, but there is no risk of identifier collision with other publishers.
 2.	Add a summary description for your SKU. This will be read by humans in the UX, so it is advised to make it easily readable. This information does not need to be locked until “Push to Staging”. Until then, you are free to edit it. 
@@ -67,17 +69,85 @@ Once you have added an offer, you will need to define/identify your SKU(s).
 The following section focuses on best practices for creating a Linux-based VM Image for the Microsoft Azure Store. For a step-by-step walkthrough, refer to the following documentation: [Creating and Uploading a Virtual Hard Disk that Contains the Linux Operating System.] (http://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-create-upload-vhd/)
 
 **Choose the correct VHD size**
+
 Published SKUs (VM Images) should be designed to work with all VM sizes that support the number of disks for the SKU. You can provide guidance on recommended sizes, but these will be treated as recommendations and not enforced.
 
 1.	Linux OS VHD: The Linux OS VHD in your VM Image should be created as a 30GB – 50GB fixed format VHD. It cannot be less than 30GB.  If the physical size is less than VHD size, the VHD should be sparse. Linux VHDs larger than 50GB will be considered on a case by case basis. If you already have a VHD in a different format, you can use the [Convert-VHD PowerShell cmdlet to change the format.] (http://technet.microsoft.com/en-us/library/hh848454.aspx)
 2.	Data disk VHD: Data disks can be as large as 1TB. Data disk VHDs should be created as a fixed format VHD, but also be sparse. When deciding on the disk size, please keep in mind that end users cannot resize VHDs within an image. 
 
 **Ensure the latest Azure Linux Agent is installed**
-When preparing the OS VHD, make sure the latest Azure Linux Agent is installed, using the RPM or Deb package. The agent provides key functions for deploying Linux IaaS deployment in Azure, such as image provisioning and networking capabilities. 
+
+When preparing the OS VHD, make sure the latest [Azure Linux Agent](http://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-agent-user-guide/) is installed, using the RPM or Deb package. The agent provides key functions for deploying Linux IaaS deployment in Azure, such as image provisioning and networking capabilities. 
 
 While the agent can be configured in a variety of ways, we recommend that you use a generic agent configuration to maximize compatibility. While it is possible to install the Agent manually, it is strongly recommended that you use the preconfigured installer packages.
 
-If you do choose to install the agent manually from the GitHub repository, first copy the ‘waagent’ file to /usr/sbin and run the following commands as root: 
+If you do choose to install the agent manually from the [GitHub repository](https://github.com/Azure/WALinuxAgent), first copy the ‘waagent’ file to /usr/sbin and run the following commands as root: 
+
+# chmod 755 /usr/sbin/waagent
+# /usr/sbin/waagent –install
+
+The agent configuration file will be placed at /etc/waagent.conf. 
+
+**Verify that required libraries are included**
+
+In addition to the Azure Linux Agent, the following libraries should also be included:
+3.	[Linux Integration Services](http://www.microsoft.com/en-us/download/details.aspx?id=41554) Version 3.0 or higher
+4.	Kernel Patch for Azure I/O stability (likely not needed for any recent kernel, but should be verified)
+5.	[Python](https://www.python.org/) 2.5 or above (Python 2.6+ is highly recommended)
+6.	Python pyasn1 package, if not already installed
+7.	[OpenSSL](https://www.openssl.org/) v 1.0 or greater
+
+**Set up disk partitions**
+
+We recommend not using Logical Volume Manager. Create a single root partition for the OS disk. Do not use a swap partition on the OS or data disk. We do recommend removing a SWAP partition, even if is not mounted in /etc/fstab. If needed, a swap partition can be created on the local resource disk by the Linux Agent. 
+
+**Add required Kernel Boot Line parameters**
+
+The following parameters also need to be added to the Kernel Boot Line: 
+
+console=ttyS0 earlyprintk=ttyS0 rootdelay=300 
+
+This ensures that Azure Support can provide customers with serial console output when needed. It also provides adequate timeout for OS disk mounting from cloud storage. Even if your SKU blocks end customers from directly SSHing into the virtual machine, serial console output must be enabled.
+
+**Include SSH Server by Default**
+
+We strongly recommend enabling SSH for the end user.  If SSH Server is enabled, add the SSH keep alive to sshd config with the following option: ClientAliveInterval 180.  While 180 is recommended, the acceptable range is 30 to 235.  Not all applications desire allowing direct SSH to the virtual machine for the end user.  If SSH is explicitly blocked, the ClientAliveInterval does not need to be set.
+
+**Meet networking requirements**
+
+The following are networking requirements for an Azure-compatible Linux VM Image.
+- Network Manager must not be installed, since it conflicts with the Azure Linux Agent. The Agent will not install if it detects the network manager package. 
+- Networking configuration should use the ifcfg-eth0 file and should be controllable via the ifup/ifdown scripts.
+- There should be no custom network configuration. You need to delete the resolv.conf file. This will be done as part of deprovisioning. You can also perform this step manually with the following command: 
+
+rm /etc/resolv.conf
+
+- The network device needs to be brought up on boot and use DHCP.
+- IPv6 is not supported on Azure.  If this property is enabled, it will not work.  
+
+3.2.8.	Ensure security best practices are in place
+It is critical for SKUs in the Azure Store to follow best practices in regards to security. These include the following. 
+- Install all security patches for your distribution. 
+- Follow distribution security guidelines. 
+- Avoid creating default accounts, which remain the same, across provisioning instances. 
+- Clear bash history entries 
+- Include iptables (firewall) software, but do not enable any rules. This will provide a seamless default experience for customers. Customers who want to use a VM firewall for additional configuration can configure the iptables rules to meet their specific needs. 
+
+3.2.9.	Generalize the image
+All images in the Azure Store must be re-usable in a generic fashion, which requires stripping them of certain configuration specifics. To accomplish this in Linux, the OS VHD must be ‘deprovisioned’.
+
+The Linux command for deprovisioning is as follows: 
+
+#waagent –deprovision
+
+This command automatically performs the following actions:
+- Removes the nameserver configuration in /etc/resolv.conf 
+- Removes cached DHCP client leases 
+- Resets host name to localhost.localdomain 
+
+We recommend setting the configuration file to ensure the following actions are also completed: 
+- Set Provisioning.RegenerateSshHostKeyPair to 'y' in the configuration file to remove all SSH host keys
+- Set Provisioning.DeleteRootPassword to 'y' in the configuration file to remove the ‘root’ password from /etc/shadow
 
 
 Prepare technical artifacts for publication and complete certification tests (Artifact type specific)
