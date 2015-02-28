@@ -36,7 +36,7 @@ Your customers will want to know what value Microsoft Azure Certified provides f
 - With Microsoft Azure Certified applications and services, you can bring your mission-critical workloads to the cloud with Microsoft Azure and the Microsoft Azure Marketplace.
 
 ### Correct:
-- As a Microsoft Azure Certified application, enterprise customers can easily find, purchase and deploy [Contoso’s product] from the Microsoft Azure Marketplace and ensure technical compatibility for customers bringing their existing [Contoso product] licenses to run on Azure.
+- As a Microsoft Azure Certified application, enterprise customers can easily find, purchase and deploy Contoso’s product from the Microsoft Azure Marketplace and ensure technical compatibility for customers bringing their existing Contoso product licenses to run on Azure.
 
 ## Call to Action and Microsoft Azure Marketplace Messaging
 The call to action for customers should be to purchase or deploy your application from the unified Microsoft Azure Marketplace. Customers will benefit by receiving clear messaging that explains where they can go to purchase or deploy your product on Azure, as linked to directly by a URL to your product’s listing in the Azure Marketplace.
