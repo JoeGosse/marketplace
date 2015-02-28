@@ -82,10 +82,10 @@ When preparing the OS VHD, make sure the latest [Azure Linux Agent](http://azure
 While the agent can be configured in a variety of ways, we recommend that you use a generic agent configuration to maximize compatibility. While it is possible to install the Agent manually, it is strongly recommended that you use the preconfigured installer packages.
 
 If you do choose to install the agent manually from the [GitHub repository](https://github.com/Azure/WALinuxAgent), first copy the ‘waagent’ file to /usr/sbin and run the following commands as root: 
-
+```
 # chmod 755 /usr/sbin/waagent
 # /usr/sbin/waagent –install
-
+```
 The agent configuration file will be placed at /etc/waagent.conf. 
 
 **Verify that required libraries are included**
@@ -104,9 +104,9 @@ We recommend not using Logical Volume Manager. Create a single root partition fo
 **Add required Kernel Boot Line parameters**
 
 The following parameters also need to be added to the Kernel Boot Line: 
-
+```
 console=ttyS0 earlyprintk=ttyS0 rootdelay=300 
-
+```
 This ensures that Azure Support can provide customers with serial console output when needed. It also provides adequate timeout for OS disk mounting from cloud storage. Even if your SKU blocks end customers from directly SSHing into the virtual machine, serial console output must be enabled.
 
 **Include SSH Server by Default**
@@ -119,13 +119,14 @@ The following are networking requirements for an Azure-compatible Linux VM Image
 - Network Manager must not be installed, since it conflicts with the Azure Linux Agent. The Agent will not install if it detects the network manager package. 
 - Networking configuration should use the ifcfg-eth0 file and should be controllable via the ifup/ifdown scripts.
 - There should be no custom network configuration. You need to delete the resolv.conf file. This will be done as part of deprovisioning. You can also perform this step manually with the following command: 
-
+```
 rm /etc/resolv.conf
-
+```
 - The network device needs to be brought up on boot and use DHCP.
 - IPv6 is not supported on Azure.  If this property is enabled, it will not work.  
 
-3.2.8.	Ensure security best practices are in place
+**Ensure security best practices are in place**
+
 It is critical for SKUs in the Azure Store to follow best practices in regards to security. These include the following. 
 - Install all security patches for your distribution. 
 - Follow distribution security guidelines. 
@@ -133,13 +134,14 @@ It is critical for SKUs in the Azure Store to follow best practices in regards t
 - Clear bash history entries 
 - Include iptables (firewall) software, but do not enable any rules. This will provide a seamless default experience for customers. Customers who want to use a VM firewall for additional configuration can configure the iptables rules to meet their specific needs. 
 
-3.2.9.	Generalize the image
+**Generalize the image**
+
 All images in the Azure Store must be re-usable in a generic fashion, which requires stripping them of certain configuration specifics. To accomplish this in Linux, the OS VHD must be ‘deprovisioned’.
 
 The Linux command for deprovisioning is as follows: 
-
+```
 #waagent –deprovision
-
+```
 This command automatically performs the following actions:
 - Removes the nameserver configuration in /etc/resolv.conf 
 - Removes cached DHCP client leases 
@@ -148,6 +150,98 @@ This command automatically performs the following actions:
 We recommend setting the configuration file to ensure the following actions are also completed: 
 - Set Provisioning.RegenerateSshHostKeyPair to 'y' in the configuration file to remove all SSH host keys
 - Set Provisioning.DeleteRootPassword to 'y' in the configuration file to remove the ‘root’ password from /etc/shadow
+
+## 3.3 Create an Azure-compatible VHD (Windows-based)
+The following section focuses on the steps to create a SKU based on Windows Server for the Microsoft Azure Store.
+
+**Ensure you are using the correct base VHDs**
+
+The OS VHD for your VM Image must be based on a Microsoft Azure-approved base image, containing Windows Server or SQL Server. 
+
+To begin, create a VM from one of the following images, located at the Microsoft Azure Portal (portal.azure.com):
+
+- Windows Server [2012 R2 Datacenter](http://go.microsoft.com/fwlink/?LinkID=511809&clcid=0x409), [2012 Datacenter](http://go.microsoft.com/fwlink/?LinkID=511808&clcid=0x409), [2008 R2 SP1](http://go.microsoft.com/fwlink/?LinkID=511806&clcid=0x409)
+- SQL Server 2014 [Enterprise](http://go.microsoft.com/fwlink/?LinkID=511810&clcid=0x409), [Standard](http://go.microsoft.com/fwlink/?LinkID=511817&clcid=0x409), [Web](http://go.microsoft.com/fwlink/?LinkID=511818&clcid=0x409)
+- SQL Server 2012 SP2 [Enterprise](http://go.microsoft.com/fwlink/?LinkID=511812&clcid=0x409), [Standard](http://go.microsoft.com/fwlink/?LinkID=511815&clcid=0x409), [Web](http://go.microsoft.com/fwlink/?LinkID=511816&clcid=0x409) 
+- SQL Server 2008 R2 SP2 [Enterprise](http://go.microsoft.com/fwlink/?LinkID=511819&clcid=0x409), [Standard](http://go.microsoft.com/fwlink/?LinkID=511820&clcid=0x409), [Web](http://go.microsoft.com/fwlink/?LinkID=511821&clcid=0x409) 
+
+These links can also be found in the Publishing Portal under the SKU page. 
+
+Note: if you are using the current Azure Management Portal or PowerShell, Windows Server Images published on September 8, 2014 and later are approved. 
+
+3.3.2.	Create your Windows VM
+From the Microsoft Azure Portal, you can create your VM based on an approved base image in just a few simple steps. The following is an overview of the process. 
+
+1.	From the base image page, select Create VM to be directed to the new [Microsoft Azure Portal](https://portal.azure.com).
+2.	Log in to the portal with the Microsoft account and password for the Azure subscription you wish to use.
+3.	Follow the prompts to create a VM using the base image you have selected. At the very least, you will need to provide a host name (name of the computer), username (admin user registered), and password for the VM.
+4.	Select the size of the VM to deploy.
+a.	If you plan to develop the VHD on premises, the size does not matter. Consider using one of the smaller VMs. 
+b.	If you plan to develop the image in Azure, consider using one of the recommended VM sizes for the selected image. 
+c.	For pricing information, refer to the Recommended Pricing Tier selector displayed on the portal. It will provide the three recommended sizes provided by the publisher. (In this case, the publisher is Microsoft.)
+5.	Set properties. 
+a.	For quick deployment, you can leave the default values for the properties under Optional Configuration and Resource Group. 
+b.	If desired, under Storage Account, you can select the storage account in which the OS VHD will be stored. 
+c.	If desired, under Resource Group, you can select the logical group in which to place the VM. 
+
+6.	Select the Location to which to deploy. 
+a.	If you plan to develop the VHD on premises, the location does not matter as you will be uploading the image to Azure later. 
+b.	If you plan to develop the image in Azure, consider using one of the US-based Microsoft Azure regions from the beginning. This will speed up the VHD copying process that Microsoft performs on your behalf when you submit your image for certification. 
+7.	Click Create. The VM will begin deploying. Within minutes, you will have a successful deployment and can begin to create the image for your SKU.
+
+**Develop your VHD in the cloud**
+
+It is strongly recommended that you develop your VHD in the cloud using Remote Desktop Protocol (RDP). You will connect to RDP with the username and password specified during provisioning. 
+
+Note: if you are developing your VHD on-premises (which is not recommended) see Appendix 2 for instructions on how to download the VHD to a local system. Downloading your VHD is NOT necessary if you are developing in the cloud. 
+
+**Connect via RDP using the Microsoft Azure Portal**
+
+1.	Select Browse and then VMs. 
+2.	The VMs blade will open. Ensure the VM you want to connect with is running and select it from the list of deployed VMs. 
+3.	A blade opens describing the selected VM. At the top, click Connect.
+4.	You will be prompted to enter the username and password you specified at time of provisioning. 
+
+**Connect via RDP using PowerShell**
+
+To download a remote desktop file to a local machine, use the [Get-AzureRemoteDesktopFile cmdlet](http://msdn.microsoft.com/en-us/library/dn495261.aspx). In order to use this cmdlet, you will need to know the name of the service and name of the VM. If you created the VM from the [Microsoft Azure Portal](https://portal.azure.com), you can find this information under VM Properties.
+1.	In the Microsoft Azure Portal, Select Browse and then VMs.
+2.	The Virtual Machines blade will open. Select the VM that you deployed from the list of VMs.
+3.	A blade opens describing the selected VM.
+4.	Click Properties.
+5.	The first portion of the domain name is the service name. The host name is the VM name.
+6.	The cmdlet to download the RDP file for the created VM to the Administrator’s local desktop is as follows:
+```
+Get-AzureRemoteDesktopFile -ServiceName “baseimagevm-6820cq00” -Name “BaseImageVM” –LocalPath “C:\Users\Administrator\Desktop\BaseImageVM.rdp”
+```
+More information about RDP can be found on MSDN in the article [Connect to an Azure VM with RDP or SSH](http://msdn.microsoft.com/library/azure/dn535788.aspx).
+
+**Configure a VM and create your SKU**
+
+Once the OS VHD is downloaded, use Hyper-V and configure a VM to begin creating your SKU. Detailed steps can be found at the following TechNet link: [Install Hyper-V and Configure a VM.](http://technet.microsoft.com/en-us/library/hh846766.aspx)
+
+
+**Choose the correct VHD size**
+
+The Windows OS VHD in your VM Image should be created as a 128 GB fixed format VHD.  If the physical size is less than 128GB, the VHD should be sparse. The base Windows and SQL Server images provided already meet these requirements; do not change the format or the size of the VHD obtained. 
+
+Data disks can be as large as 1TB. When deciding on the disk size, remember that end users cannot resize VHDs within an image at time of deployment. Data disk VHDs should be created as a fixed format VHD, but also be sparse. Data disks can be empty or contain data.
+
+**Install the latest Windows patches**
+
+The base images contain the latest patches up to their published date. Before publishing the OS VHD you have created, ensure that Windows Update has been run and that all the latest ‘Critical’ and ‘Important’ security patches have been installed. 
+
+**Perform additional configuration and schedule tasks as necessary**
+
+If additional configuration is needed, consider using a scheduled task that runs at startup to make any final changes to the VM once it has been deployed.
+- It is a best practice to have the task delete itself upon successful execution.
+- No configuration should rely on drives other than C:\ or D:\, since these are the only two drives that are always guaranteed to exist. C:\ is the OS disk and D:\ is the temporary local disk. 
+
+**Generalize the image**
+
+All images in the Azure Store must be re-usable in a generic fashion. In other words, the OS VHD must be generalized. 
+- For Windows, the image should be “sysprepped” and no configurations should be done that do not support the ‘sysprep’ command. 
+- You can run the command “sysprep.exe /generalize /oobe /shutdown” from the directory %windir%\System32\Sysprep. Guidance on how to sysprep the operating system is provided in Step 1 of the following MSDN article - Create and upload a Windows Server VHD to Azure.
 
 
 Prepare technical artifacts for publication and complete certification tests (Artifact type specific)
