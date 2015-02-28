@@ -1,4 +1,4 @@
-#Instructions for providing content for a Virtual Machine Image in the Azure Marketplace
+#Instructions for publishing a Virtual Machine Image in the Azure Marketplace
 
 ## Step 3: Create and certify your Azure-compatible VHD and Request Certification in the Publishing Portal
 
